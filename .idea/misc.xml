@@ -1,0 +1,9 @@
+<project version="4">
+  <component name="Black">
+    <option name="sdkName" value="Python 3.9 (Parsing_log_file)" />
+  </component>
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.9 (Parsing_log_file)" project-jdk-type="Python SDK" />
+  <component name="PyCharmProfessionalAdvertiser">
+    <option name="shown" value="true" />
+  </component>
+</project>
