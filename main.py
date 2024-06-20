@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-import Parser
+from Parser import Parser
 import os
 
 
@@ -38,13 +38,14 @@ def upload():
                 filename = secure_filename('log.bin')
                 file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
                 try:
-                    log = Parser.read('log/log.bin')
-                    Parser.GetGameDescriptionPlayers(log)
-                    Parser.GetGameDescriptionPolygon(log)
-                    Parser.SetServerClass(Parser.GetServerEvent(log))
-                    Parser.SetPlayerClass(Parser.GetPlayersEvent(log),
-                                          Parser.GetDataPlayers(log))
-                    Parser.SetPolygonClass(Parser.GetPolygonLog(log))
+                    global parser
+                    parser=Parser()
+                    log = parser.ReadFile('log/log.bin')
+                    parser.descriptionPlayers=parser.GetDescriptionPlayers(log)
+                    parser.descriptionPolygons=parser.GetDescriptionPolygon(log)
+                    parser.server=parser.GetServer(log)
+                    parser.Players=parser.SetPlayers(parser.GetPlayersEvent(log), parser.GetPlayersData(log))
+                    parser.Polygons=parser.SetPolygonClass(parser.GetPolygonLog(log))
                 except Exception as e:
                     print(e)
                     return 'Error Parser'
@@ -56,8 +57,8 @@ def upload():
 
 @app.route('/description')
 def description():
-    data = {'descriptionPlayers': Parser.descriptionPlayers,
-            'descriptionPolygons': Parser.descriptionPolygons,
+    data = {'descriptionPlayers': parser.descriptionPlayers,
+            'descriptionPolygons': parser.descriptionPolygons,
             'Server': 'Server'}
     return jsonify(data)
 
@@ -66,7 +67,7 @@ def description():
 def player_coordinates(id):
     try:
         data=dict()
-        for i in Parser.Players:
+        for i in parser.Players:
             if int(id)==i.numPlayer:
                 data.update([('numPlayer', i.numPlayer), ('timeGameCoordinates', i.timeGameCoordinates), ('coordinates', i.coordinates)])
                 return jsonify(data)
@@ -88,7 +89,7 @@ def player_events(id):
                             62: 'bonus Taking', 70: 'reload', 71: 'block Player', 98: 'create Role', 99: 'delete Role',
                             102: 'delete Object', 103: 'set Led', 152: 'delete Method'}
         data=dict()
-        for i in Parser.Players:
+        for i in parser.Players:
             if int(id)==i.numPlayer:
                 data.update([('numPlayer', i.numPlayer), ('timeGameEvents', i.timeGameEvent), ('event', i.event),
                              ('paramEvent', i.paramEvent), ('descriptionEvent', descriptionEvent)])
@@ -103,7 +104,7 @@ def player_events(id):
 def player_RC(id):
     try:
         data=dict()
-        for i in Parser.Players:
+        for i in parser.Players:
             if int(id)==i.numPlayer:
                 data.update([('numPlayer', i.numPlayer), ('timeGame', i.timeGameCoordinates), ('RC', i.RC)])
                 return jsonify(data)
@@ -117,7 +118,7 @@ def player_RC(id):
 def player_yaw(id):
     try:
         data=dict()
-        for i in Parser.Players:
+        for i in parser.Players:
             if int(id)==i.numPlayer:
                 data.update([('numPlayer', i.numPlayer), ('timeGame', i.timeGameCoordinates), ('yaw', i.yaw)])
                 return jsonify(data)
@@ -135,7 +136,7 @@ def polygon(id):
                             52: 'start Role', 53: 'delete Role', 54: 'block Player', 55: 'create Product',
                             56: 'get Product', 57: 'give Product'}
         data=dict()
-        for i in Parser.Polygons:
+        for i in parser.Polygons:
             if int(id)==i.numPolygon:
                 data.update([('numPolygon', i.numPolygon), ('timeGame', i.timeGame), ('event', i.event),
                              ('paramEvent', i.paramEvent), ('descriptionEvent', descriptionEvent)])
@@ -155,8 +156,8 @@ def server():
                             255: 'Error Server Event Max', 2: 'create Game', 3: 'start Game', 4: 'reset Game',
                             5: 'stop Game', 6: 'end Game', 202: 'create Log Directory Error'}
         data=dict()
-        data.update([('event', Parser.server.event), ('timeGame', Parser.server.timeGame),
-                       ('paramEvent', Parser.server.paramEvent), ('descriptionEvent', descriptionEvent)])
+        data.update([('event', parser.server.event), ('timeGame', parser.server.timeGame),
+                       ('paramEvent', parser.server.paramEvent), ('descriptionEvent', descriptionEvent)])
         return jsonify(data)
     except Exception as e:
         print(e)
@@ -164,5 +165,5 @@ def server():
 
 
 if __name__ == '__main__':
-    app.run(debug=False)
+    app.run(debug=True)
 
